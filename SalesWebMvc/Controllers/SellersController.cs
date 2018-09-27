@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualStudio.Web.CodeGeneration.Contracts.Messaging;
 using SalesWebMvc.Models;
 using SalesWebMvc.Models.ViewModels;
 using SalesWebMvc.Services;
@@ -27,17 +26,23 @@ namespace SalesWebMvc.Controllers
             return View(list);
         }
 
-        public IActionResult create()
+        public IActionResult Create()
         {
             var departments = _departmentsService.FindAll();
             var viewModel = new SellerFormViewModel {Departments = departments};
-            return View(viewModel);
+            return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(Seller seller)
         {
+            if (!ModelState.IsValid)
+            {
+                var departments = _departmentsService.FindAll();
+                var viewModel = new SellerFormViewModel {Seller = seller, Departments = departments};
+                return View(viewModel);
+            }   
             _sellerService.Insert(seller);
             return RedirectToAction(nameof(Index));
         }
@@ -104,6 +109,13 @@ namespace SalesWebMvc.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, Seller seller)
         {
+            if (!ModelState.IsValid)
+            {
+                var departments = _departmentsService.FindAll();
+                var viewModel = new SellerFormViewModel { Seller = seller, Departments = departments };
+                return View(viewModel);
+            }
+
             if (id != seller.Id)
             {
                 return RedirectToAction(nameof(Error), new { Message = "Id mismatch" });
@@ -116,11 +128,11 @@ namespace SalesWebMvc.Controllers
             }
             catch (NotFoundException e)
             {
-                return RedirectToAction(nameof(Error), new { Message = e.Message });
+                return RedirectToAction(nameof(Error), new {e.Message });
             }
             catch (DbConcurrencyException e)
             {
-                return RedirectToAction(nameof(Error), new { Message = e.Message });
+                return RedirectToAction(nameof(Error), new {e.Message });
             }
            
         }
