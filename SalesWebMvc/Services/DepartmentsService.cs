@@ -6,18 +6,37 @@ using Microsoft.EntityFrameworkCore;
 
 namespace SalesWebMvc.Services
 {
-    public class DepartmentService
+    public class DepartmentService : ServiceBase<Department>
     {
-        private readonly SalesWebMvcContext _context;
-
-        public DepartmentService(SalesWebMvcContext context)
+        public DepartmentService(SalesWebMvcContext context) : base(context)
         {
-            _context = context;
         }
 
-        public async Task<List<Department>> FindAllAsync()
+        protected override IQueryable<Department> Ordenar(IQueryable<Department> query)
         {
-            return await _context.Department.OrderBy(x => x.Name).ToListAsync();
+            return query.OrderBy(x => x.Name);
+        }
+    }
+
+    public class ServiceBase<T> where T : class
+    {
+        protected readonly SalesWebMvcContext Context;
+
+        public ServiceBase(SalesWebMvcContext context)
+        {
+            Context = context;
+        }
+
+        public async Task<List<T>> FindAllAsync()
+        {
+            var query = Context.Set<T>().AsQueryable();
+            var temp = Ordenar(query);
+            return await temp.ToListAsync();
+        }
+
+        protected virtual IQueryable<T> Ordenar(IQueryable<T> query)
+        {
+            return query;
         }
     }
 }
